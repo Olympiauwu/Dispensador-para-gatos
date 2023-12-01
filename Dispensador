@@ -1,0 +1,72 @@
+ #include <Wire.h> 
+#include "LiquidCrystal_I2C.h"
+#include <SoftwareSerial.h>  
+SoftwareSerial BT(10,11);
+LiquidCrystal_I2C lcd(0x27,16,2);
+int bloqueo = 0;
+String App = " ";
+String AppB = " ";
+void setup() {
+  pinMode(2,INPUT);//sensorA
+  pinMode(3,INPUT);//sensorB
+  pinMode(4,OUTPUT);//motor
+  pinMode(8,INPUT);//sensorAgua
+  pinMode(9,OUTPUT);//motobomba
+  Serial.begin(9600);
+  lcd.init();
+  BT.begin(9600);  
+}
+
+void loop() {
+  int sensorA = digitalRead(2);
+  int sensorB = digitalRead(3);
+  int sensorAgua = digitalRead(8);
+    if ((sensorA==LOW || sensorB==LOW)&&  bloqueo == 0){
+     Serial.println("Sensores activados");
+     digitalWrite(4,HIGH);//activar motor comida
+     lcd.setCursor(0, 0);
+     lcd.print("Activado comida...   ");
+     //BT.println(App);
+     delay(10000);
+     digitalWrite(4,LOW);
+     lcd.setCursor(0, 0);
+     lcd.print("Desactivado comida...");
+     App="Gato detectado\n";
+     //BT.println("Gato detectado");
+     digitalWrite(9,HIGH);//ACTIVAR BOMBA AGUA
+     delay(10000);
+     digitalWrite(9,LOW);//Desactivar motobomba
+     bloqueo=1;
+  }
+
+  if((sensorA==HIGH && sensorB==HIGH)&&  bloqueo == 1)
+  {
+    Serial.println("Sensores no detectados");
+    digitalWrite(4,LOW);
+    lcd.setCursor(0, 0);
+    lcd.print("Desactivado");
+    //BT.println("Gato no detectado");
+    App="Gato no detectado\n";
+    BT.println(App);
+    digitalWrite(9,LOW);
+    bloqueo=0;
+  }
+
+
+  if(sensorAgua==LOW)
+  {
+    Serial.println("Hay agua    ");
+    lcd.setCursor(0, 1);
+    lcd.print("Hay agua    ");
+    AppB="Hay agua";
+  }
+  else
+  {
+    Serial.println("No hay agua");
+    lcd.setCursor(0, 1);
+    lcd.print("No hay agua");
+    AppB="No hay agua";
+  }
+BT.println(App+AppB);
+delay(300);
+}
